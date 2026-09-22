@@ -34,7 +34,11 @@ switch ($env:PROCESSOR_ARCHITECTURE) {
 }
 
 $asset = "review-raven-$triple.exe"
-$cacheHome = if ($env:XDG_CACHE_HOME) { $env:XDG_CACHE_HOME } else { Join-Path $env:LOCALAPPDATA 'cache' }
+# Deliberately the same location lib/fetch.sh computes, so the two Windows
+# launchers share one cache: under Git Bash, $HOME is the user profile, making
+# its $HOME/.cache the profile's .cache directory. Whichever launcher runs
+# first spares the other a download.
+$cacheHome = if ($env:XDG_CACHE_HOME) { $env:XDG_CACHE_HOME } else { Join-Path $env:USERPROFILE '.cache' }
 $cache = Join-Path (Join-Path $cacheHome 'review-raven') $version
 $bin = Join-Path $cache 'review-raven.exe'
 
