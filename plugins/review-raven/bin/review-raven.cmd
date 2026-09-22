@@ -1,17 +1,7 @@
 @echo off
-rem Run review raven from cmd.exe by delegating to the bash launcher.
+rem Run review raven from cmd.exe.
 rem
-rem The download and its checksum verification stay in lib/fetch.sh rather than
-rem being reimplemented here. A second copy of the verification step is exactly
-rem where a security bug would go unnoticed, and Git Bash is already a practical
-rem prerequisite for Claude Code's Bash tool on Windows.
-setlocal
-for %%I in (bash.exe) do set "BASH=%%~$PATH:I"
-if not defined BASH (
-  if exist "%ProgramFiles%\Git\bin\bash.exe" set "BASH=%ProgramFiles%\Git\bin\bash.exe"
-)
-if not defined BASH (
-  echo review-raven: bash is required to run this launcher. Install Git for Windows. 1>&2
-  exit /b 1
-)
-"%BASH%" "%~dp0review-raven" %*
+rem Windows has no bash to rely on, so the download, the checksum and the cache
+rem live in the PowerShell script beside this one rather than in lib/fetch.sh.
+rem PowerShell ships with Windows; Git for Windows is not required.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0review-raven.ps1" %*
