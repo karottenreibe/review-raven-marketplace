@@ -1,0 +1,16 @@
+{
+  "name": "review-raven",
+  "version": "0.0.0",
+  "description": "Review tool for changes made by AI coding agents. The agent writes a review of what it did; you read it as a web page, comment on the diff, and approve or request changes.",
+  "author": {
+    "name": "Fabian Streitel",
+    "url": "https://github.com/karottenreibe"
+  },
+  "homepage": "https://github.com/karottenreibe/review-raven-marketplace",
+  "keywords": [
+    "code-review",
+    "diff",
+    "agent",
+    "review"
+  ]
+}

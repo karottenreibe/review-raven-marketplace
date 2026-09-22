@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Run review raven, fetching the binary for this platform if it is not cached.
+#
+# Claude Code puts a plugin's bin/ directory on the PATH of the shell it
+# spawns, so this is what `review-raven ...` resolves to for an agent following
+# the skill. It holds no logic of its own: the cache and the download live in
+# lib/fetch.sh, which the prefetch hook also calls.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# A failure here is fatal -- there is nothing to run. fetch.sh has already
+# explained itself on stderr.
+BIN="$("$ROOT/lib/fetch.sh")" || exit 1
+
+# exec rather than a nested call, so signals, the exit status and the
+# controlling terminal all reach the binary directly. The server is stopped
+# with ctrl-c and its exit status tells the agent what the reviewer decided,
+# so neither may be swallowed by a wrapper.
+exec "$BIN" "$@"
