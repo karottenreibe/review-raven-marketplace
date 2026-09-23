@@ -5,6 +5,10 @@
 # spawns, so this is what `review-raven ...` resolves to for an agent following
 # the skill. It holds no logic of its own: the cache and the download live in
 # lib/fetch.sh, which the prefetch hook also calls.
+#
+# review-raven.ps1 is the Windows equivalent of this file and lib/fetch.sh
+# together. A change to how the binary is located or handed over belongs in
+# both.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 

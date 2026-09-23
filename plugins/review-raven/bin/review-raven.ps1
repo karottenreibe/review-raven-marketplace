@@ -4,8 +4,16 @@
 # must work without Git for Windows installed, so this path cannot delegate to
 # bash and reimplements the download instead.
 #
-# Keep it in step with lib/fetch.sh: the cache layout, the asset names and the
-# checksum rule are a shared contract, and a change to one is a change to both.
+# THIS FILE HAS A TWIN: lib/fetch.sh and bin/review-raven do all of the below
+# in POSIX shell. A change here is a change there. What the two must agree on:
+#
+#   - the cache directory, which on Windows is the user profile's .cache
+#   - the asset name, and the checksum file's format
+#   - the rule that a binary is only run once its digest matches
+#   - the lock's name, its location, and when it is considered stale
+#
+# Changing one alone does not fail any test; it splits users across two caches
+# or, worse, leaves one platform verifying nothing.
 [CmdletBinding()]
 # Not $Args: that is an automatic variable and cannot be declared a parameter.
 param([Parameter(ValueFromRemainingArguments = $true)] [string[]] $Passthrough)

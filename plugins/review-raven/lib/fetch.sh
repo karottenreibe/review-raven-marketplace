@@ -2,10 +2,23 @@
 # Ensure the review raven binary for this platform is in the cache, and print
 # its path on stdout.
 #
-# Both entry points call this: bin/review-raven before exec'ing the binary, and
-# hooks/prefetch.sh to warm the cache ahead of first use. Keeping the download
-# in one place means the launcher and the hook cannot disagree about where the
-# binary lives or whether it is trustworthy.
+# Both POSIX entry points call this: bin/review-raven before exec'ing the
+# binary, and hooks/prefetch.sh to warm the cache ahead of first use. Keeping
+# the download in one place means the launcher and the hook cannot disagree
+# about where the binary lives or whether it is trustworthy.
+#
+# THIS FILE HAS A TWIN: bin/review-raven.ps1 does all of the below again in
+# PowerShell, because Windows has to work without bash and no code can be
+# shared across the two languages. A change here is a change there. What the
+# two must agree on:
+#
+#   - the cache directory, which on Windows is the user profile's .cache
+#   - the asset name, and the checksum file's format
+#   - the rule that a binary is only run once its digest matches
+#   - the lock's name, its location, and when it is considered stale
+#
+# Changing one alone does not fail any test; it splits users across two caches
+# or, worse, leaves one platform verifying nothing.
 #
 # Everything except the final path goes to stderr, so a caller can capture the
 # path with a plain command substitution.
