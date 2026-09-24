@@ -13,7 +13,8 @@
 # two must agree on:
 #
 #   - the cache directory, which on Windows is the user profile's .cache
-#   - the asset name, and the checksum file's format
+#   - the asset name, its archive format, the binary's name inside it, and the
+#     checksum file's format
 #   - the rule that a binary is only run once its digest matches
 #   - the lock's name, its location, and when it is considered stale
 #
@@ -38,10 +39,11 @@ die() { echo "review-raven: $*" >&2; exit 1; }
 VERSION="$(tr -d ' \t\r\n' < "$ROOT/VERSION.txt")"
 [ -n "$VERSION" ] || die "VERSION.txt is empty; the installation is incomplete"
 
-# Target triples match the artefact names the release workflow uploads. An
-# unlisted platform is a hard stop with its identity named, because the next
-# thing the user has to do is tell us what to build.
+# Target triples and archive formats match the assets the release workflow
+# builds. An unlisted platform is a hard stop with its identity named, because
+# the next thing the user has to do is tell us what to build.
 EXE=""
+ARCHIVE="tar.gz"
 case "$(uname -s)" in
     Linux)
         case "$(uname -m)" in
@@ -54,11 +56,11 @@ case "$(uname -s)" in
             *) die "no binary for macOS $(uname -m); supported: arm64 (Apple Silicon)" ;;
         esac ;;
     MINGW*|MSYS*|CYGWIN*|Windows_NT)
-        TRIPLE="x86_64-pc-windows-msvc"; EXE=".exe" ;;
+        TRIPLE="x86_64-pc-windows-msvc"; EXE=".exe"; ARCHIVE="zip" ;;
     *) die "no binary for $(uname -s) $(uname -m)" ;;
 esac
 
-ASSET="review-raven-${TRIPLE}${EXE}"
+ASSET="review-raven-${TRIPLE}.${ARCHIVE}"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/review-raven/$VERSION"
 BIN="$CACHE/review-raven$EXE"
 
@@ -105,29 +107,45 @@ if ! mkdir "$LOCK" 2>/dev/null; then
         exit 0
     fi
 fi
-trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT INT TERM
-
 URL="https://github.com/$REPO/releases/download/v$VERSION/$ASSET"
-TMP="$CACHE/.download.$$"
+TMP="$CACHE/.download.$$.$ARCHIVE"
+UNPACKED="$CACHE/.download.$$"
+# The archive and its extracted contents are scratch space; only the verified
+# binary moved to $BIN outlives this script, whichever way it exits.
+trap 'rm -rf "$TMP" "$UNPACKED"; rmdir "$LOCK" 2>/dev/null || true' EXIT INT TERM
 
 echo "review-raven: fetching $VERSION for $TRIPLE" >&2
 if command -v curl >/dev/null 2>&1; then
-    curl -fsSL --retry 2 -o "$TMP" "$URL" || { rm -f "$TMP"; die "download failed: $URL"; }
+    curl -fsSL --retry 2 -o "$TMP" "$URL" || die "download failed: $URL"
 elif command -v wget >/dev/null 2>&1; then
-    wget -q -O "$TMP" "$URL" || { rm -f "$TMP"; die "download failed: $URL"; }
+    wget -q -O "$TMP" "$URL" || die "download failed: $URL"
 else
     die "neither curl nor wget is available to download the binary"
 fi
 
-GOT="$(sha256_of "$TMP")" || { rm -f "$TMP"; die "no SHA-256 tool available to verify the download"; }
-if [ "$GOT" != "$WANT" ]; then
-    rm -f "$TMP"
-    die "checksum mismatch for $ASSET (expected $WANT, got $GOT); refusing to run it"
-fi
+GOT="$(sha256_of "$TMP")" || die "no SHA-256 tool available to verify the download"
+[ "$GOT" = "$WANT" ] || die "checksum mismatch for $ASSET (expected $WANT, got $GOT); refusing to run it"
 
-chmod +x "$TMP"
+# Extraction happens only after the digest matched, so no unverified archive is
+# ever unpacked. Git Bash ships unzip in most installations; PowerShell is the
+# fallback because it is present on every Windows machine.
+mkdir -p "$UNPACKED" || die "cannot create $UNPACKED"
+case "$ARCHIVE" in
+    tar.gz) tar -xzf "$TMP" -C "$UNPACKED" || die "cannot extract $ASSET" ;;
+    zip)
+        if command -v unzip >/dev/null 2>&1; then
+            unzip -q "$TMP" -d "$UNPACKED" || die "cannot extract $ASSET"
+        else
+            powershell.exe -NoProfile -Command \
+                "Expand-Archive -LiteralPath '$(cygpath -w "$TMP")' -DestinationPath '$(cygpath -w "$UNPACKED")'" \
+                || die "cannot extract $ASSET"
+        fi ;;
+esac
+[ -f "$UNPACKED/review-raven$EXE" ] || die "$ASSET does not contain review-raven$EXE"
+
+chmod +x "$UNPACKED/review-raven$EXE"
 # The binary becomes visible at its final name only once it is complete and
 # verified, so an interrupted download can never be picked up as a cache hit.
-mv -f "$TMP" "$BIN" || { rm -f "$TMP"; die "cannot install the binary into $CACHE"; }
+mv -f "$UNPACKED/review-raven$EXE" "$BIN" || die "cannot install the binary into $CACHE"
 
 echo "$BIN"

@@ -8,7 +8,8 @@
 # in POSIX shell. A change here is a change there. What the two must agree on:
 #
 #   - the cache directory, which on Windows is the user profile's .cache
-#   - the asset name, and the checksum file's format
+#   - the asset name, its archive format, the binary's name inside it, and the
+#     checksum file's format
 #   - the rule that a binary is only run once its digest matches
 #   - the lock's name, its location, and when it is considered stale
 #
@@ -41,7 +42,7 @@ switch ($env:PROCESSOR_ARCHITECTURE) {
     default { Die "no binary for Windows $($env:PROCESSOR_ARCHITECTURE); supported: x64" }
 }
 
-$asset = "review-raven-$triple.exe"
+$asset = "review-raven-$triple.zip"
 # Deliberately the same location lib/fetch.sh computes, so the two Windows
 # launchers share one cache: under Git Bash, $HOME is the user profile, making
 # its $HOME/.cache the profile's .cache directory. Whichever launcher runs
@@ -88,30 +89,45 @@ if (-not (Test-Path $bin)) {
     } else {
         try {
             $url = "https://github.com/$repo/releases/download/v$version/$asset"
-            $tmp = Join-Path $cache ".download.$PID"
+            # Windows PowerShell's Expand-Archive refuses a path that does not
+            # end in .zip, hence the extension on the scratch file.
+            $tmp = Join-Path $cache ".download.$PID.zip"
+            $unpacked = Join-Path $cache ".download.$PID"
             [Console]::Error.WriteLine("review-raven: fetching $version for $triple")
 
             try {
-                # Progress rendering makes Invoke-WebRequest dramatically slower
-                # on large files, and this runs where nobody is watching it.
+                # Progress rendering makes Invoke-WebRequest and Expand-Archive
+                # dramatically slower, and this runs where nobody is watching it.
                 $prev = $ProgressPreference; $ProgressPreference = 'SilentlyContinue'
                 Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing
-                $ProgressPreference = $prev
             } catch {
-                Remove-Item $tmp -Force -ErrorAction SilentlyContinue
                 Die "download failed: $url"
             }
 
             $got = (Get-FileHash -Path $tmp -Algorithm SHA256).Hash.ToLower()
             if ($got -ne $want.ToLower()) {
-                Remove-Item $tmp -Force -ErrorAction SilentlyContinue
                 Die "checksum mismatch for $asset (expected $want, got $got); refusing to run it"
             }
 
+            # Extraction happens only after the digest matched, so no
+            # unverified archive is ever unpacked.
+            try {
+                Expand-Archive -LiteralPath $tmp -DestinationPath $unpacked -Force
+            } catch {
+                Die "cannot extract $asset"
+            }
+            $ProgressPreference = $prev
+            $extracted = Join-Path $unpacked 'review-raven.exe'
+            if (-not (Test-Path $extracted)) { Die "$asset does not contain review-raven.exe" }
+
             # The binary appears under its final name only once it is complete
             # and verified, so an interrupted download is never a cache hit.
-            Move-Item -Path $tmp -Destination $bin -Force
+            Move-Item -Path $extracted -Destination $bin -Force
         } finally {
+            # The archive and its extracted contents are scratch space; only the
+            # verified binary moved to $bin outlives this block.
+            Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+            Remove-Item $unpacked -Force -Recurse -ErrorAction SilentlyContinue
             Remove-Item $lock -Force -Recurse -ErrorAction SilentlyContinue
         }
     }

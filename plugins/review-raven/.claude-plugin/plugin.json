@@ -1,6 +1,6 @@
 {
   "name": "review-raven",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Review tool for changes made by AI coding agents. The agent writes a review of what it did; you read it as a web page, comment on the diff, and approve or request changes.",
   "author": {
     "name": "Fabian Streitel",
