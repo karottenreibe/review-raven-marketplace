@@ -21,9 +21,7 @@ The review supplies what the diff cannot: which parts of the system did the chan
 6. Do what it printed on exit.
    On changes requested, answer every comment under `previous` before serving the next round.
 
-`review-raven` is on `PATH`.
-Installed as a plugin, its first call fetches the binary for this platform, so it may pause once.
-If the command is not found, run it by absolute path from the plugin's `bin/` directory.
+If `review-raven` is not on `PATH`, run `bin/review-raven` (`bin\review-raven.cmd` on Windows) from two directories above this skill's directory.
 
 ## The parts
 
@@ -31,7 +29,7 @@ If the command is not found, run it by absolute path from the plugin's `bin/` di
 |---|---|---|---|
 | Ideal design | `ideal` | Whole change | Would you build it the same way on a clean slate? |
 | Last round | `previous` | Previous round | What did the reviewer ask for, and what came of it? |
-| Architecture | `architecture` | Whole change | Which parts of the system architecture did the change touch? |
+| Architecture | `toc`, `architecture` | Whole change | Which parts of the system architecture did the change touch? |
 | Design | `design.decisions`, `caveats` | Whole change | Why this shape, and what will surprise the reviewer? |
 | Implementation | `intro`, `narrative` | This round | How was it carried out, concept by concept? |
 
@@ -54,6 +52,8 @@ For each comment under `previous`, write only `reply` and `concept`:
 
 ## Architecture
 
+- `toc`: "In order to <goal>, I needed to" and a list with one terse sentence per section, in narrative order.
+  Link each sentence to its section as `[sentence](#concept-id)`.
 - One box per logical concept, never per file, function or commit.
   Three to eight boxes, including surrounding `context` concepts.
 - `kind: touched` for a concept this round created or altered; `context` otherwise.

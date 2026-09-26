@@ -5,13 +5,14 @@
     "name": "Fabian Streitel",
     "url": "https://github.com/karottenreibe"
   },
-  "description": "Review raven: read and answer the changes an AI agent made.",
+  "description": "Review Raven: read and answer the changes an AI agent made. Works with Claude Code, GitHub Copilot CLI, Codex, and VS Code.",
   "plugins": [
     {
       "name": "review-raven",
       "displayName": "Review Raven",
       "source": "./plugins/review-raven",
-      "description": "Review tool for changes made by AI coding agents. The agent writes a review of what it did; you read it as a web page, comment on the diff, and approve or request changes.",
+      "description": "Review tool for changes made by AI coding agents. The agent writes a review of what it did; you read it as a web page, comment on the diff, and approve or request changes. Works with Claude Code, GitHub Copilot CLI, Codex, and VS Code.",
+      "homepage": "https://rottenrei.be/review-raven",
       "category": "development",
       "keywords": ["code-review", "diff", "agent", "review"]
     }

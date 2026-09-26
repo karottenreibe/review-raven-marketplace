@@ -2,10 +2,10 @@
 # Ensure the review raven binary for this platform is in the cache, and print
 # its path on stdout.
 #
-# Both POSIX entry points call this: bin/review-raven before exec'ing the
-# binary, and hooks/prefetch.sh to warm the cache ahead of first use. Keeping
-# the download in one place means the launcher and the hook cannot disagree
-# about where the binary lives or whether it is trustworthy.
+# bin/review-raven calls this before exec'ing the binary. It is a separate
+# script rather than part of the launcher because its EXIT trap releases the
+# download lock and removes scratch files, and an exec in the same process
+# would skip that trap.
 #
 # THIS FILE HAS A TWIN: bin/review-raven.ps1 does all of the below again in
 # PowerShell, because Windows has to work without bash and no code can be
@@ -25,9 +25,7 @@
 # path with a plain command substitution.
 #
 # Exit status is 0 with the path on stdout, or non-zero with a diagnostic on
-# stderr. Callers decide whether a failure is fatal: it is for the launcher,
-# which has nothing to run, and it is not for the prefetch hook, which is an
-# optimisation over the launcher's own download.
+# stderr.
 set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -65,7 +63,7 @@ CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/review-raven/$VERSION"
 BIN="$CACHE/review-raven$EXE"
 
 # A cache hit is the overwhelmingly common case and does no work beyond this
-# test, which is what makes running on every session start acceptable.
+# test, which is what makes running it on every invocation acceptable.
 if [ -x "$BIN" ]; then
     echo "$BIN"
     exit 0

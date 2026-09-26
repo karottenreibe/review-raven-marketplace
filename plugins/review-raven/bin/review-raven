@@ -3,8 +3,10 @@
 #
 # Claude Code puts a plugin's bin/ directory on the PATH of the shell it
 # spawns, so this is what `review-raven ...` resolves to for an agent following
-# the skill. It holds no logic of its own: the cache and the download live in
-# lib/fetch.sh, which the prefetch hook also calls.
+# the skill. Agents that do not extend PATH, such as Codex, reach this file
+# through the path relative to the skill that the skill names, so it must stay
+# at bin/ in the plugin root. It holds no logic of its own: the cache and the
+# download live in lib/fetch.sh.
 #
 # review-raven.ps1 is the Windows equivalent of this file and lib/fetch.sh
 # together. A change to how the binary is located or handed over belongs in
