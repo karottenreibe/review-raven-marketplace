@@ -1,6 +1,6 @@
 {
   "name": "review-raven",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Review tool for changes made by AI coding agents. The agent writes a review of what it did; you read it as a web page, comment on the diff, and approve or request changes. Works with Claude Code, GitHub Copilot CLI, Codex, and VS Code.",
   "author": {
     "name": "Fabian Streitel",

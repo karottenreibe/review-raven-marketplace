@@ -1,3 +1,7 @@
+# v0.4.0
+- (feat) the approval dialog can ask the agent to create a pull request
+- (feat) the architecture diagram marks each component that was changed non-trivially with a red "NON-TRIVIAL" badge; hovering the component shows a summary of the code changes
+
 # v0.3.0
 - (feat) the design tab shows the table of contents beside the verdict and the architecture diagram at full width; the problem is shown in the implementation tab only
 - (feat) the approval dialog can ask the agent to commit, push, merge and clean up a linked worktree, or follow further written instructions

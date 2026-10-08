@@ -58,6 +58,9 @@ For each comment under `previous`, write only `reply` and `concept`:
   Three to eight boxes, including surrounding `context` concepts.
 - `kind: touched` for a concept this round created or altered; `context` otherwise.
   Each `touched` box needs a narrative section; a concept not worth one is `context` or omitted.
+- `change` on each `touched` box judges the code edits, not their conceptual effect.
+  `nontrivial` for substantial work such as new logic, a rewrite, or an extraction across several places; `trivial` for small or mechanical edits such as renames, moves, wiring or propagated signatures.
+- `summary` on `nontrivial` only: the code changes performed ("extract helper class from 3 existing locations", "rewrite history checking from scratch").
 - `row`/`col`: inputs above what they flow into; related concepts in one column; one box per cell.
 - Every box has at least one arrow.
   Label arrows with a one-to-four-word relationship ("asks it to decide").
